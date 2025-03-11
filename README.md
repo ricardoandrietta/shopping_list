@@ -1,6 +1,6 @@
 # Items to Buy
 
-A full-stack web application for managing shopping lists and items to buy. The application is built with a Vue.js frontend and Node.js/Express backend, using SQLite as the database.
+A full-stack web application for managing shopping lists and items to buy. The application is built with a Vue.js frontend and Node.js/Express backend, using SQLite for development and PostgreSQL for production.
 
 ## Project Structure
 
@@ -11,7 +11,10 @@ items_to_buy/
 │   └── public/      # Static assets
 └── backend/         # Express.js backend application
     ├── src/         # Source files
-    └── grocery.sqlite # SQLite database
+    │   ├── migrations/  # Database migrations
+    │   └── entity/      # TypeORM entities
+    ├── typeorm.config.ts # TypeORM configuration for migrations
+    └── grocery.sqlite # SQLite database (development only)
 ```
 
 ## Technologies Used
@@ -31,7 +34,8 @@ items_to_buy/
 - Express.js
 - TypeScript
 - TypeORM
-- SQLite3
+- SQLite3 (development)
+- PostgreSQL (production)
 - CORS
 
 ## Prerequisites
@@ -59,6 +63,10 @@ cd ../frontend
 npm install
 ```
 
+4. Set up environment variables:
+   - Copy `.env.example` to `.env` in the backend directory
+   - Update the values as needed
+
 ## Development
 
 ### Running the Backend
@@ -75,6 +83,37 @@ npm run dev
 ```
 The frontend development server will start on `http://localhost:5173`
 
+## Database Migrations
+
+The project uses TypeORM migrations to manage database schema changes.
+
+### Generate a Migration
+
+After making changes to entity files, generate a migration:
+
+```bash
+cd backend
+npm run migration:generate -- src/migrations/MigrationName
+```
+
+### Run Migrations
+
+To apply pending migrations:
+
+```bash
+cd backend
+npm run migration:run
+```
+
+### Revert Migrations
+
+To revert the most recent migration:
+
+```bash
+cd backend
+npm run migration:revert
+```
+
 ## Building for Production
 
 ### Backend
@@ -89,13 +128,26 @@ cd frontend
 npm run build
 ```
 
+## Deployment to Vercel
+
+The backend is configured for deployment to Vercel:
+
+1. Push your code to a Git repository
+2. Connect your repository to Vercel
+3. Set the following environment variables in Vercel:
+   - `NODE_ENV`: `production`
+   - `DATABASE_URL`: Your PostgreSQL connection string
+   - `CORS_ORIGIN`: Your frontend URL
+
+Migrations will automatically run during the build process.
+
 ## Features
 
 - Shopping list management
 - QR code scanning functionality
 - Real-time updates
 - Responsive design
-- SQLite database for data persistence
+- Database persistence with SQLite (dev) and PostgreSQL (prod)
 
 ## License
 
