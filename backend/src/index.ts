@@ -27,43 +27,55 @@ app.get('/', (req, res) => {
   });
 });
 
+// Database connection state
+let isDbInitialized = false;
+
 // Initialize database connection
+const initializeDb = async () => {
+  // Only initialize once
+  if (isDbInitialized) return;
+  
+  try {
+    await AppDataSource.initialize();
+    const groceryRepository = AppDataSource.getRepository(GroceryItem);
+    initializeRepository(groceryRepository);
+    console.log('Database connection established');
+    isDbInitialized = true;
+  } catch (error) {
+    console.error('Error during Data Source initialization', error);
+    throw error;
+  }
+};
+
+// Routes with lazy initialization
+app.use('/api/groceries', async (req, res, next) => {
+  try {
+    // Initialize DB if not already initialized
+    if (!isDbInitialized) {
+      await initializeDb();
+    }
+    // Continue to the actual routes
+    groceryRoutes(req, res, next);
+  } catch (error) {
+    console.error('Error handling request:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Start server in development mode only
 if (process.env.NODE_ENV !== 'production') {
-  // In development, initialize the database and start the server
-  AppDataSource.initialize()
-    .then(() => {
-      const groceryRepository = AppDataSource.getRepository(GroceryItem);
-      initializeRepository(groceryRepository);
-      
-      console.log('Database connection established');
-      
-      // Routes
-      app.use('/api/groceries', groceryRoutes);
-      
-      // Start server
-      app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-      });
-    })
-    .catch(error => {
-      console.error('Error during Data Source initialization', error);
+  // Initialize DB and start server
+  initializeDb().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
-} else {
-  // In production (Vercel), initialize the database but don't start the server
-  // Migrations will be run by the vercel-build script
-  AppDataSource.initialize()
-    .then(() => {
-      const groceryRepository = AppDataSource.getRepository(GroceryItem);
-      initializeRepository(groceryRepository);
-      console.log('Database connection established');
-      
-      // Routes
-      app.use('/api/groceries', groceryRoutes);
-    })
-    .catch(error => {
-      console.error('Error during Data Source initialization', error);
-    });
+  }).catch(error => {
+    console.error('Failed to start server:', error);
+  });
 }
 
 // Export the Express app for Vercel
-export default app; 
+export default app;
+
+// For compatibility with CommonJS
+module.exports = app; 
