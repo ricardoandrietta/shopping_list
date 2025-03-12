@@ -13,7 +13,7 @@ interface GroceryItem {
 
 // Create an axios instance with the correct base URL
 const api = axios.create({
-  baseURL: '/api/groceries', // This will be proxied to http://localhost:3000/api/groceries
+  baseURL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/groceries` : '/api/groceries',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

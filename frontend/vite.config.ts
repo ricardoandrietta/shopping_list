@@ -25,6 +25,10 @@ export default defineConfig(({ mode }) => {
           secure: false
         }
       }
+    },
+    build: {
+      // Set to false to disable source maps in production
+      sourcemap: false
     }
   }
 })

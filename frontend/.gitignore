@@ -15,6 +15,13 @@ yarn-error.log
 dist/
 build/
 
+# Generated files
+*.js.map
+*.css.map
+src/**/*.vue.js
+src/**/*.js
+!src/**/*.d.ts
+
 # Database
 *.sqlite
 *.sqlite3
