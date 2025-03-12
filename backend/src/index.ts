@@ -17,8 +17,13 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Root endpoint
+// Simple text response for the root route
 app.get('/', (req, res) => {
+  res.send('Hello from the Grocery List API!');
+});
+
+// JSON info endpoint
+app.get('/info', (req, res) => {
   res.json({
     message: 'Grocery List API is running',
     endpoints: {
