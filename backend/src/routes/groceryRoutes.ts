@@ -13,10 +13,24 @@ interface GroceryParams {
   id: string;
 }
 
-// Get all grocery items
-const getAllItems: RequestHandler = async (_req, res) => {
+interface ListItemsParams {
+  listId: string;
+}
+
+// Get all grocery items (optionally filtered by shopping list)
+const getAllItems: RequestHandler = async (req, res) => {
   try {
-    const groceries = await groceryRepository.find();
+    const listId = req.query.listId ? parseInt(req.query.listId as string) : undefined;
+    
+    const where = listId ? { shopping_list_id: listId } : {};
+    
+    const groceries = await groceryRepository.find({
+      where,
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+    
     res.json(groceries);
   } catch (error) {
     console.error('Error fetching grocery items:', error);
@@ -52,6 +66,7 @@ const createItem: RequestHandler = async (req, res) => {
     res.status(500).json({ message: 'Error creating grocery item', error });
   }
 };
+
 // Update a grocery item
 const updateItem: RequestHandler<GroceryParams> = async (req, res): Promise<void> => {
   try {

@@ -1,6 +1,11 @@
 <template>
   <div class="grocery-container">
-    <h1 class="page-title">Add Grocery Item</h1>
+    <div class="header-section">
+      <router-link :to="`/list/${id}`" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+      </router-link>
+      <h1 class="page-title">Add Grocery Item</h1>
+    </div>
     
     <div class="form-container">
       <form @submit.prevent="addItem" class="grocery-form">
@@ -48,20 +53,14 @@
               type="text"
               class="form-input barcode-input"
             />
-            <router-link 
-              to="/scan" 
-              class="scan-button"
-            >
+            <router-link :to="`/list/${id}/scan`" class="scan-button">
               <i class="fas fa-barcode"></i> Scan
             </router-link>
           </div>
         </div>
         
         <div class="form-actions">
-          <router-link 
-            to="/" 
-            class="cancel-button"
-          >
+          <router-link :to="`/list/${id}`" class="cancel-button">
             Cancel
           </router-link>
           <button 
@@ -78,11 +77,13 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useGroceryStore } from '../stores/groceryStore'
 
 const router = useRouter()
+const route = useRoute()
+const id = computed(() => route.params.id)
 const groceryStore = useGroceryStore()
 
 const form = reactive({
@@ -90,7 +91,8 @@ const form = reactive({
   quantity: 1,
   price: 0,
   barcode: undefined as string | undefined,
-  purchased: false
+  purchased: false,
+  shopping_list_id: parseInt(route.params.id as string)
 })
 
 const { loading } = groceryStore
@@ -98,7 +100,7 @@ const { loading } = groceryStore
 const addItem = async () => {
   await groceryStore.addItem(form)
   if (!groceryStore.error) {
-    router.push('/')
+    router.push(`/list/${id.value}`)
   }
 }
 
@@ -121,11 +123,34 @@ onMounted(() => {
   padding: 0 1rem;
 }
 
+.header-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  margin-right: 1rem;
+  color: #4b5563;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #e5e7eb;
+}
+
 .page-title {
   font-size: 2rem;
   font-weight: bold;
   color: #333;
-  margin-bottom: 1.5rem;
+  margin: 0;
 }
 
 .form-container {
@@ -156,13 +181,12 @@ onMounted(() => {
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 1rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #4361ee;
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .barcode-container {
@@ -177,11 +201,13 @@ onMounted(() => {
 .scan-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: #f3f4f6;
-  color: #4b5563;
+  justify-content: center;
   padding: 0.75rem 1rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
   border-radius: 0.375rem;
+  color: #4b5563;
+  font-weight: 500;
   text-decoration: none;
   transition: background-color 0.2s;
 }
@@ -192,17 +218,17 @@ onMounted(() => {
 
 .form-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 1rem;
   margin-top: 2rem;
 }
 
 .cancel-button {
-  display: inline-flex;
-  align-items: center;
-  background-color: #f3f4f6;
-  color: #4b5563;
   padding: 0.75rem 1.5rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
   border-radius: 0.375rem;
+  color: #4b5563;
   font-weight: 500;
   text-decoration: none;
   transition: background-color 0.2s;
@@ -213,20 +239,18 @@ onMounted(() => {
 }
 
 .submit-button {
-  display: inline-flex;
-  align-items: center;
-  background-color: #4361ee;
-  color: white;
   padding: 0.75rem 1.5rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
+  background-color: #3b82f6;
   border: none;
+  border-radius: 0.375rem;
+  color: white;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #2541b2;
+  background-color: #2563eb;
 }
 
 .submit-button:disabled {
@@ -234,16 +258,14 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .form-actions {
     flex-direction: column;
-    gap: 1rem;
   }
   
   .cancel-button, .submit-button {
     width: 100%;
-    justify-content: center;
+    text-align: center;
   }
 }
 </style> 

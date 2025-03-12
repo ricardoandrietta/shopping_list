@@ -1,6 +1,11 @@
 <template>
   <div class="grocery-container">
-    <h1 class="page-title">Scan Barcode</h1>
+    <div class="header-section">
+      <router-link :to="`/list/${id}`" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+      </router-link>
+      <h1 class="page-title">Scan Barcode</h1>
+    </div>
     
     <div class="scanner-container">
       <div id="scanner-container" class="scanner-view"></div>
@@ -30,11 +35,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Html5Qrcode } from 'html5-qrcode'
 
 const router = useRouter()
+const route = useRoute()
+const id = computed(() => route.params.id)
 const scannedBarcode = ref<string | null>(null)
 let html5QrCode: Html5Qrcode | null = null
 
@@ -81,7 +88,7 @@ const stopScanner = () => {
     })
   }
   
-  router.go(-1) // Go back to previous page
+  router.push(`/list/${id.value}`)
 }
 
 const useBarcode = () => {
@@ -100,11 +107,34 @@ const useBarcode = () => {
   padding: 0 1rem;
 }
 
+.header-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  margin-right: 1rem;
+  color: #4b5563;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #e5e7eb;
+}
+
 .page-title {
   font-size: 2rem;
   font-weight: bold;
   color: #333;
-  margin-bottom: 1.5rem;
+  margin: 0;
 }
 
 .scanner-container {
@@ -147,18 +177,19 @@ const useBarcode = () => {
 .scanner-actions {
   display: flex;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 .cancel-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: #f3f4f6;
-  color: #4b5563;
+  justify-content: center;
   padding: 0.75rem 1.5rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
   border-radius: 0.375rem;
+  color: #4b5563;
   font-weight: 500;
-  border: none;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -168,21 +199,21 @@ const useBarcode = () => {
 }
 
 .submit-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: #4361ee;
-  color: white;
+  justify-content: center;
   padding: 0.75rem 1.5rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
+  background-color: #3b82f6;
   border: none;
+  border-radius: 0.375rem;
+  color: white;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #2541b2;
+  background-color: #2563eb;
 }
 
 .submit-button:disabled {
@@ -190,16 +221,13 @@ const useBarcode = () => {
   cursor: not-allowed;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .scanner-actions {
     flex-direction: column;
-    gap: 1rem;
   }
   
   .cancel-button, .submit-button {
     width: 100%;
-    justify-content: center;
   }
 }
 </style> 

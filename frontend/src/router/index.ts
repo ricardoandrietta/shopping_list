@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import ShoppingLists from '../views/ShoppingLists.vue'
 import GroceryList from '../views/GroceryList.vue'
 import AddGroceryItem from '../views/AddGroceryItem.vue'
 import EditGroceryItem from '../views/EditGroceryItem.vue'
@@ -10,23 +11,34 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: GroceryList
+      component: ShoppingLists
     },
     {
-      path: '/add',
-      name: 'add',
-      component: AddGroceryItem
-    },
-    {
-      path: '/edit/:id',
-      name: 'edit',
-      component: EditGroceryItem,
+      path: '/list/:id',
+      name: 'groceryList',
+      component: GroceryList,
       props: true
     },
     {
-      path: '/scan',
+      path: '/list/:id/add',
+      name: 'add',
+      component: AddGroceryItem,
+      props: true
+    },
+    {
+      path: '/list/:id/edit/:itemId',
+      name: 'edit',
+      component: EditGroceryItem,
+      props: route => ({
+        id: route.params.itemId,
+        listId: route.params.id
+      })
+    },
+    {
+      path: '/list/:id/scan',
       name: 'scan',
-      component: ScanBarcode
+      component: ScanBarcode,
+      props: true
     }
   ]
 })

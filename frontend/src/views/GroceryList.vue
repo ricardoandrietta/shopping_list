@@ -1,11 +1,16 @@
 <template>
   <div class="grocery-container">
-    <!-- Main title -->
-    <h1 class="page-title">My Grocery List</h1>
+    <!-- Main title with back button -->
+    <div class="header-section">
+      <router-link to="/" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+      </router-link>
+      <h1 class="page-title">{{ currentList ? currentList.title : 'Shopping List' }}</h1>
+    </div>
     
     <!-- Controls section -->
     <div class="controls-section">
-      <router-link to="/add" class="add-button">
+      <router-link :to="`/list/${id}/add`" class="add-button">
         + Add Item
       </router-link>
       
@@ -220,9 +225,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useGroceryStore } from '../stores/groceryStore';
+import { useShoppingListStore } from '../stores/shoppingListStore';
 
-const store = useGroceryStore();
+const route = useRoute();
+const id = computed(() => route.params.id);
+const groceryStore = useGroceryStore();
+const shoppingListStore = useShoppingListStore();
 const dataLoaded = ref(false);
 const searchQuery = ref('');
 const filterStatus = ref('all');
@@ -231,12 +241,13 @@ const currentPage = ref(1);
 const itemsPerPage = ref(5);
 
 // Computed properties for reactive data
-const items = computed(() => store.items);
-const loading = computed(() => store.loading);
-const error = computed(() => store.error);
-const totalItems = computed(() => store.totalItems);
-const purchasedItems = computed(() => store.purchasedItems);
-const unpurchasedItems = computed(() => store.unpurchasedItems);
+const items = computed(() => groceryStore.items);
+const loading = computed(() => groceryStore.loading || shoppingListStore.loading);
+const error = computed(() => groceryStore.error || shoppingListStore.error);
+const totalItems = computed(() => groceryStore.totalItems);
+const purchasedItems = computed(() => groceryStore.purchasedItems);
+const unpurchasedItems = computed(() => groceryStore.unpurchasedItems);
+const currentList = computed(() => shoppingListStore.currentList);
 
 // Filtered and sorted items
 const filteredItems = computed(() => {
@@ -285,12 +296,12 @@ const paginatedItems = computed(() => {
 
 // Methods
 const togglePurchased = (id) => {
-  store.togglePurchased(id);
+  groceryStore.togglePurchased(id);
 };
 
 const deleteItem = (id) => {
   if (confirm('Are you sure you want to delete this item?')) {
-    store.deleteItem(id);
+    groceryStore.deleteItem(id);
   }
 };
 
@@ -314,28 +325,16 @@ const nextPage = () => {
   }
 };
 
-const loadData = async () => {
-  if (!dataLoaded.value) {
-    try {
-      await store.fetchItems();
-      dataLoaded.value = true;
-    } catch (err) {
-      console.error('Error loading data:', err);
-    }
-  }
-};
-
-// Load data on component mount
-onMounted(() => {
-  loadData();
-  
-  // Add Font Awesome if it doesn't exist
-  if (!document.getElementById('font-awesome-css')) {
-    const link = document.createElement('link');
-    link.id = 'font-awesome-css';
-    link.rel = 'stylesheet';
-    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
-    document.head.appendChild(link);
+// Load data
+onMounted(async () => {
+  if (id.value) {
+    // Set the current shopping list ID
+    groceryStore.setCurrentShoppingList(parseInt(id.value));
+    
+    // Fetch the shopping list details
+    await shoppingListStore.fetchList(parseInt(id.value));
+    
+    dataLoaded.value = true;
   }
 });
 </script>
@@ -347,11 +346,31 @@ onMounted(() => {
   padding: 0 1rem;
 }
 
-.page-title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #333;
+.header-section {
+  display: flex;
+  align-items: center;
   margin-bottom: 1.5rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  margin-right: 1rem;
+  color: #4b5563;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #e5e7eb;
+}
+
+.page-title {
+  margin: 0;
 }
 
 .controls-section {
