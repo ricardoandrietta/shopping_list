@@ -79,8 +79,14 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Initialize database for production (Vercel)
+// This ensures the database is initialized before handling requests
+initializeDb().catch(error => {
+  console.error('Failed to initialize database:', error);
+});
+
 // Export the Express app for Vercel
-// export default app;
+export default app;
 
 // For compatibility with CommonJS
 module.exports = app; 
