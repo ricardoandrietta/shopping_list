@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { ShoppingList } from './ShoppingList';
 
 @Entity()
 export class GroceryItem {
@@ -19,6 +20,15 @@ export class GroceryItem {
 
   @Column({ default: false })
   purchased!: boolean;
+
+  @ManyToOne(() => ShoppingList, shoppingList => shoppingList.items, {
+    onDelete: 'CASCADE'
+  })
+  @JoinColumn({ name: 'shopping_list_id' })
+  shoppingList!: ShoppingList;
+
+  @Column({ nullable: true })
+  shopping_list_id!: number;
 
   @CreateDateColumn()
   createdAt!: Date;

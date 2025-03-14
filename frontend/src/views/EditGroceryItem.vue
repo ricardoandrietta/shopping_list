@@ -1,6 +1,11 @@
 <template>
   <div class="grocery-container">
-    <h1 class="page-title">Edit Grocery Item</h1>
+    <div class="header-section">
+      <router-link :to="`/list/${listId}`" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+      </router-link>
+      <h1 class="page-title">Edit Grocery Item</h1>
+    </div>
     
     <!-- Loading state -->
     <div v-if="loading" class="loading-container">
@@ -62,31 +67,28 @@
               type="text"
               class="form-input barcode-input"
             />
-            <router-link 
-              to="/scan" 
-              class="scan-button"
-            >
+            <router-link :to="`/list/${listId}/scan`" class="scan-button">
               <i class="fas fa-barcode"></i> Scan
             </router-link>
           </div>
         </div>
         
         <div class="form-group">
-          <label class="checkbox-label">
-            <input 
-              type="checkbox" 
-              v-model="form.purchased"
-              class="checkbox-input"
-            />
-            <span>Mark as purchased</span>
-          </label>
+          <label class="form-label">Status</label>
+          <div class="status-toggle">
+            <label class="toggle-label">
+              <input 
+                type="checkbox" 
+                v-model="form.purchased"
+                class="toggle-input"
+              />
+              <span class="toggle-text">{{ form.purchased ? 'Purchased' : 'Not Purchased' }}</span>
+            </label>
+          </div>
         </div>
         
         <div class="form-actions">
-          <router-link 
-            to="/" 
-            class="cancel-button"
-          >
+          <router-link :to="`/list/${listId}`" class="cancel-button">
             Cancel
           </router-link>
           <button 
@@ -108,7 +110,8 @@ import { useRouter } from 'vue-router'
 import { useGroceryStore } from '../stores/groceryStore'
 
 const props = defineProps<{
-  id: string
+  id: string,
+  listId: string
 }>()
 
 const router = useRouter()
@@ -119,7 +122,8 @@ const form = reactive({
   quantity: 1,
   price: 0,
   barcode: undefined as string | undefined,
-  purchased: false
+  purchased: false,
+  shopping_list_id: parseInt(props.listId)
 })
 
 const { loading, error, items } = groceryStore
@@ -135,7 +139,7 @@ onMounted(async () => {
   }
   
   if (items.length === 0) {
-    await groceryStore.fetchItems()
+    await groceryStore.fetchItems(parseInt(props.listId))
   }
   
   const item = items.find(item => item.id === parseInt(props.id))
@@ -146,14 +150,14 @@ onMounted(async () => {
     form.barcode = item.barcode
     form.purchased = item.purchased
   } else {
-    router.push('/')
+    router.push(`/list/${props.listId}`)
   }
 })
 
 const updateItem = async () => {
   await groceryStore.updateItem(parseInt(props.id), form)
   if (!groceryStore.error) {
-    router.push('/')
+    router.push(`/list/${props.listId}`)
   }
 }
 </script>
@@ -165,11 +169,34 @@ const updateItem = async () => {
   padding: 0 1rem;
 }
 
+.header-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  margin-right: 1rem;
+  color: #4b5563;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #e5e7eb;
+}
+
 .page-title {
   font-size: 2rem;
   font-weight: bold;
   color: #333;
-  margin-bottom: 1.5rem;
+  margin: 0;
 }
 
 /* Loading state */
@@ -183,7 +210,7 @@ const updateItem = async () => {
 .loader {
   border: 3px solid #f3f3f3;
   border-radius: 50%;
-  border-top: 3px solid #4361ee;
+  border-top: 3px solid #3b82f6;
   width: 30px;
   height: 30px;
   animation: spin 1s linear infinite;
@@ -252,13 +279,12 @@ const updateItem = async () => {
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 1rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #4361ee;
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .barcode-container {
@@ -273,11 +299,13 @@ const updateItem = async () => {
 .scan-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: #f3f4f6;
-  color: #4b5563;
+  justify-content: center;
   padding: 0.75rem 1rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
   border-radius: 0.375rem;
+  color: #4b5563;
+  font-weight: 500;
   text-decoration: none;
   transition: background-color 0.2s;
 }
@@ -286,33 +314,40 @@ const updateItem = async () => {
   background-color: #e5e7eb;
 }
 
-.checkbox-label {
+.status-toggle {
+  margin-top: 0.5rem;
+}
+
+.toggle-label {
   display: flex;
   align-items: center;
   cursor: pointer;
 }
 
-.checkbox-input {
+.toggle-input {
+  margin-right: 0.5rem;
   width: 1.25rem;
   height: 1.25rem;
-  margin-right: 0.75rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
+}
+
+.toggle-text {
+  font-size: 1rem;
+  color: #4b5563;
 }
 
 .form-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 1rem;
   margin-top: 2rem;
 }
 
 .cancel-button {
-  display: inline-flex;
-  align-items: center;
-  background-color: #f3f4f6;
-  color: #4b5563;
   padding: 0.75rem 1.5rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
   border-radius: 0.375rem;
+  color: #4b5563;
   font-weight: 500;
   text-decoration: none;
   transition: background-color 0.2s;
@@ -323,20 +358,18 @@ const updateItem = async () => {
 }
 
 .submit-button {
-  display: inline-flex;
-  align-items: center;
-  background-color: #4361ee;
-  color: white;
   padding: 0.75rem 1.5rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
+  background-color: #3b82f6;
   border: none;
+  border-radius: 0.375rem;
+  color: white;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #2541b2;
+  background-color: #2563eb;
 }
 
 .submit-button:disabled {
@@ -344,16 +377,14 @@ const updateItem = async () => {
   cursor: not-allowed;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .form-actions {
     flex-direction: column;
-    gap: 1rem;
   }
   
   .cancel-button, .submit-button {
     width: 100%;
-    justify-content: center;
+    text-align: center;
   }
 }
 </style> 

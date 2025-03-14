@@ -1,35 +1,40 @@
 <template>
-  <div class="grocery-container">
-    <!-- Main title -->
-    <h1 class="page-title">My Grocery List</h1>
+  <div class="px-4 sm:px-6 md:px-8 lg:px-10 py-8 max-w-7xl mx-auto">
+    <!-- Main title with back button -->
+    <div class="flex items-center mb-6">
+      <router-link to="/" class="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full mr-4 text-gray-600 transition-colors hover:bg-gray-200">
+        <i class="fas fa-arrow-left"></i>
+      </router-link>
+      <h1 class="text-3xl font-bold text-gray-800 m-0">{{ currentList ? currentList.title : 'Shopping List' }}</h1>
+    </div>
     
     <!-- Controls section -->
-    <div class="controls-section">
-      <router-link to="/add" class="add-button">
+    <div class="flex flex-wrap gap-4 items-center mb-6">
+      <router-link :to="`/list/${id}/add`" class="text-blue-600 font-medium no-underline inline-flex items-center transition-colors hover:text-blue-800">
         + Add Item
       </router-link>
       
-      <div class="search-filter-container">
-        <div class="search-container">
+      <div class="flex flex-wrap gap-2 flex-1">
+        <div class="flex max-w-xs">
           <input 
             type="text" 
             placeholder="Search items..." 
-            class="search-input"
+            class="border border-gray-300 rounded-l-md py-2 px-3 w-full text-sm"
             v-model="searchQuery"
           />
-          <button class="search-button" @click="searchItems">
+          <button class="bg-gray-100 border border-gray-300 border-l-0 rounded-r-md py-2 px-3 cursor-pointer transition-colors hover:bg-gray-200" @click="searchItems">
             <i class="fas fa-search"></i>
           </button>
         </div>
         
-        <div class="filter-sort-container">
-          <select v-model="filterStatus" class="filter-select">
+        <div class="flex gap-2">
+          <select v-model="filterStatus" class="border border-gray-300 rounded-md py-2 px-3 text-sm bg-white min-w-[120px]">
             <option value="all">All Items</option>
             <option value="purchased">Purchased</option>
             <option value="not-purchased">Not Purchased</option>
           </select>
           
-          <button class="sort-button" @click="toggleSort">
+          <button class="bg-gray-100 border border-gray-300 rounded-md py-2 px-4 cursor-pointer transition-colors hover:bg-gray-200" @click="toggleSort">
             Sort
           </button>
         </div>
@@ -37,68 +42,71 @@
     </div>
     
     <!-- Loading state -->
-    <div v-if="loading" class="loading-container">
-      <div class="loader"></div>
-      <p class="loading-text">Loading your grocery items...</p>
+    <div v-if="loading" class="flex items-center justify-center py-12">
+      <div class="border-t-4 border-b-4 border-blue-600 rounded-full w-8 h-8 animate-spin mr-4"></div>
+      <p class="text-gray-500 text-base">Loading your grocery items...</p>
     </div>
     
     <!-- Error state -->
-    <div v-else-if="error" class="error-container">
-      <div class="error-content">
-        <i class="fas fa-exclamation-circle error-icon"></i>
-        <p class="error-text">{{ error }}</p>
+    <div v-else-if="error" class="bg-red-100 rounded-md p-4 mb-6">
+      <div class="flex items-center">
+        <i class="fas fa-exclamation-circle text-red-600 text-xl mr-3"></i>
+        <p class="text-red-700 text-sm">{{ error }}</p>
       </div>
     </div>
     
     <!-- Empty state -->
-    <div v-else-if="filteredItems.length === 0" class="empty-container">
-      <i class="fas fa-shopping-cart empty-icon"></i>
-      <p class="empty-text">Your grocery list is empty.</p>
-      <router-link to="/add" class="empty-add-button">
+    <div v-else-if="filteredItems.length === 0" class="text-center py-12 bg-white rounded-lg shadow-sm mb-4">
+      <i class="fas fa-shopping-cart text-gray-300 text-5xl mb-4"></i>
+      <p class="text-gray-500 text-lg mb-6">Your grocery list is empty.</p>
+      <button 
+        @click="router.push(`/list/${id}/add`)" 
+        class="inline-flex items-center justify-center gap-2 py-3 px-8 shadow-lg bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 rounded-lg text-white font-medium transition-all duration-300 cursor-pointer"
+      >
         <i class="fas fa-plus"></i>
         Add Your First Item
-      </router-link>
+      </button>
     </div>
     
     <!-- Table with items -->
-    <div v-else class="table-section">
-      <div class="table-container">
+    <div v-else class="mb-8">
+      <div class="rounded-lg overflow-hidden shadow-sm bg-white">
         <!-- Desktop table view -->
-        <table class="grocery-table desktop-table">
+        <table class="w-full border-collapse hidden md:table">
           <thead>
             <tr>
-              <th class="status-column">Status</th>
-              <th class="item-column">Item</th>
-              <th class="quantity-column">Quantity</th>
-              <th class="price-column">Price</th>
-              <th class="actions-column">Actions</th>
+              <th class="bg-gray-50 text-left py-3 px-4 font-semibold text-gray-600 border-b border-gray-200 w-20">Status</th>
+              <th class="bg-gray-50 text-left py-3 px-4 font-semibold text-gray-600 border-b border-gray-200 min-w-[200px]">Item</th>
+              <th class="bg-gray-50 text-right py-3 px-4 font-semibold text-gray-600 border-b border-gray-200 w-[100px]">Quantity</th>
+              <th class="bg-gray-50 text-right py-3 px-4 font-semibold text-gray-600 border-b border-gray-200 w-[100px]">Price</th>
+              <th class="bg-gray-50 text-center py-3 px-4 font-semibold text-gray-600 border-b border-gray-200 w-[100px]">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in filteredItems" :key="item.id" class="table-row">
-              <td class="status-cell">
+            <tr v-for="item in filteredItems" :key="item.id" class="border-b border-gray-200 last:border-b-0 transition-colors hover:bg-gray-50">
+              <td class="py-3 px-4 text-center">
                 <input 
                   type="checkbox"
                   :checked="item.purchased"
                   @change="togglePurchased(item.id)"
-                  class="status-checkbox"
+                  class="w-5 h-5 rounded cursor-pointer"
                 />
               </td>
-              <td class="item-cell" :class="{ 'purchased': item.purchased }">
+              <td class="py-3 px-4 font-medium" :class="{ 'line-through text-gray-400': item.purchased }">
                 {{ item.name }}
               </td>
-              <td class="quantity-cell">
+              <td class="py-3 px-4 text-right">
                 {{ item.quantity }}
               </td>
-              <td class="price-cell">
+              <td class="py-3 px-4 text-right">
                 ${{ item.price ? item.price.toFixed(2) : '0.00' }}
               </td>
-              <td class="actions-cell">
-                <div class="action-buttons">
-                  <router-link :to="`/edit/${item.id}`" class="edit-button" title="Edit">
+              <td class="py-3 px-4 text-center">
+                <div class="flex justify-center gap-3">
+                  <router-link :to="`/edit/${item.id}`" class="flex items-center justify-center w-8 h-8 text-blue-600 bg-blue-50 rounded transition-colors hover:bg-blue-100 border-none" title="Edit">
                     <i class="fas fa-pencil-alt"></i>
                   </router-link>
-                  <button @click="deleteItem(item.id)" class="delete-button" title="Delete">
+                  <button @click="deleteItem(item.id)" class="flex items-center justify-center w-8 h-8 text-red-600 bg-red-50 rounded transition-colors hover:bg-red-100 border-none" title="Delete">
                     <i class="fas fa-trash"></i>
                   </button>
                 </div>
@@ -108,45 +116,45 @@
         </table>
         
         <!-- Mobile card view -->
-        <div class="mobile-cards">
+        <div class="md:hidden">
           <div 
             v-for="item in filteredItems" 
             :key="item.id" 
-            class="item-card"
-            :class="{ 'purchased-card': item.purchased }"
+            class="border-b border-gray-200 last:border-b-0 p-4"
+            :class="{ 'bg-gray-50': item.purchased }"
           >
-            <div class="card-header">
-              <div class="card-status">
+            <div class="flex items-center mb-3">
+              <div class="mr-3">
                 <input 
                   type="checkbox"
                   :checked="item.purchased"
                   @change="togglePurchased(item.id)"
-                  class="status-checkbox"
+                  class="w-5 h-5 rounded cursor-pointer"
                 />
               </div>
-              <div class="card-title" :class="{ 'purchased': item.purchased }">
+              <div class="font-semibold text-lg text-gray-900" :class="{ 'line-through text-gray-400': item.purchased }">
                 {{ item.name }}
               </div>
             </div>
             
-            <div class="card-details">
-              <div class="card-detail">
-                <span class="detail-label">Quantity:</span>
-                <span class="detail-value">{{ item.quantity }}</span>
+            <div class="mb-4 pl-9">
+              <div class="flex justify-between mb-2">
+                <span class="text-gray-500 text-sm">Quantity:</span>
+                <span class="font-medium">{{ item.quantity }}</span>
               </div>
               
-              <div class="card-detail">
-                <span class="detail-label">Price:</span>
-                <span class="detail-value">${{ item.price ? item.price.toFixed(2) : '0.00' }}</span>
+              <div class="flex justify-between mb-2">
+                <span class="text-gray-500 text-sm">Price:</span>
+                <span class="font-medium">${{ item.price ? item.price.toFixed(2) : '0.00' }}</span>
               </div>
             </div>
             
-            <div class="card-actions">
-              <router-link :to="`/edit/${item.id}`" class="edit-button" title="Edit">
-                <i class="fas fa-pencil-alt"></i> Edit
+            <div class="flex justify-end gap-3">
+              <router-link :to="`/edit/${item.id}`" class="flex items-center justify-center py-2 px-3 text-sm text-blue-600 bg-blue-50 rounded transition-colors hover:bg-blue-100" title="Edit">
+                <i class="fas fa-pencil-alt mr-1"></i> Edit
               </router-link>
-              <button @click="deleteItem(item.id)" class="delete-button" title="Delete">
-                <i class="fas fa-trash"></i> Delete
+              <button @click="deleteItem(item.id)" class="flex items-center justify-center py-2 px-3 text-sm text-red-600 bg-red-50 rounded transition-colors hover:bg-red-100" title="Delete">
+                <i class="fas fa-trash mr-1"></i> Delete
               </button>
             </div>
           </div>
@@ -154,23 +162,23 @@
       </div>
       
       <!-- Pagination -->
-      <div class="pagination-container">
-        <div class="items-info">
+      <div class="flex justify-between items-center py-3 px-4 bg-gray-50 border-t border-gray-200 md:flex-row flex-col gap-3 md:gap-0">
+        <div class="text-sm text-gray-500">
           Showing {{ filteredItems.length }} items
         </div>
-        <div class="pagination-controls">
+        <div class="flex gap-1 md:w-auto w-full justify-between">
           <button 
-            class="page-button previous-button" 
+            class="py-1.5 px-3 bg-white border border-gray-300 rounded text-sm text-gray-600 cursor-pointer hover:bg-gray-100 disabled:opacity-50 disabled:cursor-default" 
             :disabled="currentPage <= 1"
             @click="prevPage"
           >
             Previous
           </button>
-          <button class="page-number current-page">
+          <button class="py-1.5 px-3 bg-blue-600 border border-blue-600 rounded text-sm text-white font-medium">
             {{ currentPage }}
           </button>
           <button 
-            class="page-button next-button"
+            class="py-1.5 px-3 bg-white border border-gray-300 rounded text-sm text-gray-600 cursor-pointer hover:bg-gray-100 disabled:opacity-50 disabled:cursor-default"
             :disabled="currentPage >= totalPages"
             @click="nextPage"  
           >
@@ -181,37 +189,37 @@
     </div>
     
     <!-- Shopping Summary Section -->
-    <div class="summary-section">
-      <h2 class="summary-title">Shopping Summary</h2>
-      <hr class="summary-divider">
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Shopping Summary</h2>
+      <hr class="border-0 h-px bg-gray-200 mb-6">
       
-      <div class="summary-item">
-        <div class="summary-icon">
+      <div class="flex items-center mb-5">
+        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 mr-4 text-base">
           <i class="fas fa-shopping-cart"></i>
         </div>
-        <div class="summary-content">
-          <div class="summary-label">Total Items</div>
-          <div class="summary-value">{{ totalItems }}</div>
+        <div class="flex-1">
+          <div class="text-sm text-gray-500 mb-1">Total Items</div>
+          <div class="text-2xl font-semibold text-gray-900">{{ totalItems }}</div>
         </div>
       </div>
       
-      <div class="summary-item">
-        <div class="summary-icon">
+      <div class="flex items-center mb-5">
+        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-orange-50 text-orange-600 mr-4 text-base">
           <i class="fas fa-cart-plus"></i>
         </div>
-        <div class="summary-content">
-          <div class="summary-label">Items to Buy</div>
-          <div class="summary-value">{{ unpurchasedItems }}</div>
+        <div class="flex-1">
+          <div class="text-sm text-gray-500 mb-1">Items to Buy</div>
+          <div class="text-2xl font-semibold text-gray-900">{{ unpurchasedItems }}</div>
         </div>
       </div>
       
-      <div class="summary-item">
-        <div class="summary-icon">
+      <div class="flex items-center">
+        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-green-50 text-green-600 mr-4 text-base">
           <i class="fas fa-check-circle"></i>
         </div>
-        <div class="summary-content">
-          <div class="summary-label">Items Purchased</div>
-          <div class="summary-value">{{ purchasedItems }}</div>
+        <div class="flex-1">
+          <div class="text-sm text-gray-500 mb-1">Items Purchased</div>
+          <div class="text-2xl font-semibold text-gray-900">{{ purchasedItems }}</div>
         </div>
       </div>
     </div>
@@ -220,9 +228,15 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useGroceryStore } from '../stores/groceryStore';
+import { useShoppingListStore } from '../stores/shoppingListStore';
 
-const store = useGroceryStore();
+const route = useRoute();
+const router = useRouter();
+const id = computed(() => route.params.id);
+const groceryStore = useGroceryStore();
+const shoppingListStore = useShoppingListStore();
 const dataLoaded = ref(false);
 const searchQuery = ref('');
 const filterStatus = ref('all');
@@ -231,12 +245,13 @@ const currentPage = ref(1);
 const itemsPerPage = ref(5);
 
 // Computed properties for reactive data
-const items = computed(() => store.items);
-const loading = computed(() => store.loading);
-const error = computed(() => store.error);
-const totalItems = computed(() => store.totalItems);
-const purchasedItems = computed(() => store.purchasedItems);
-const unpurchasedItems = computed(() => store.unpurchasedItems);
+const items = computed(() => groceryStore.items);
+const loading = computed(() => groceryStore.loading || shoppingListStore.loading);
+const error = computed(() => groceryStore.error || shoppingListStore.error);
+const totalItems = computed(() => groceryStore.totalItems);
+const purchasedItems = computed(() => groceryStore.purchasedItems);
+const unpurchasedItems = computed(() => groceryStore.unpurchasedItems);
+const currentList = computed(() => shoppingListStore.currentList);
 
 // Filtered and sorted items
 const filteredItems = computed(() => {
@@ -285,12 +300,12 @@ const paginatedItems = computed(() => {
 
 // Methods
 const togglePurchased = (id) => {
-  store.togglePurchased(id);
+  groceryStore.togglePurchased(id);
 };
 
 const deleteItem = (id) => {
   if (confirm('Are you sure you want to delete this item?')) {
-    store.deleteItem(id);
+    groceryStore.deleteItem(id);
   }
 };
 
@@ -314,583 +329,16 @@ const nextPage = () => {
   }
 };
 
-const loadData = async () => {
-  if (!dataLoaded.value) {
-    try {
-      await store.fetchItems();
-      dataLoaded.value = true;
-    } catch (err) {
-      console.error('Error loading data:', err);
-    }
-  }
-};
-
-// Load data on component mount
-onMounted(() => {
-  loadData();
-  
-  // Add Font Awesome if it doesn't exist
-  if (!document.getElementById('font-awesome-css')) {
-    const link = document.createElement('link');
-    link.id = 'font-awesome-css';
-    link.rel = 'stylesheet';
-    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
-    document.head.appendChild(link);
+// Load data
+onMounted(async () => {
+  if (id.value) {
+    // Set the current shopping list ID
+    groceryStore.setCurrentShoppingList(parseInt(id.value));
+    
+    // Fetch the shopping list details
+    await shoppingListStore.fetchList(parseInt(id.value));
+    
+    dataLoaded.value = true;
   }
 });
 </script>
-
-<style scoped>
-.grocery-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 1.5rem;
-}
-
-.controls-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.add-button {
-  color: #4361ee;
-  font-weight: 500;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  transition: color 0.2s;
-}
-
-.add-button:hover {
-  color: #2541b2;
-}
-
-.search-filter-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  flex: 1;
-}
-
-.search-container {
-  display: flex;
-  max-width: 300px;
-}
-
-.search-input {
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem 0 0 0.25rem;
-  padding: 0.5rem 0.75rem;
-  width: 100%;
-  font-size: 0.875rem;
-}
-
-.search-button {
-  background-color: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-left: none;
-  border-radius: 0 0.25rem 0.25rem 0;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.search-button:hover {
-  background-color: #e5e7eb;
-}
-
-.filter-sort-container {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.filter-select {
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  background-color: white;
-  min-width: 120px;
-}
-
-.sort-button {
-  background-color: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.sort-button:hover {
-  background-color: #e5e7eb;
-}
-
-/* Loading state */
-.loading-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 0;
-}
-
-.loader {
-  border: 3px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 3px solid #4361ee;
-  width: 30px;
-  height: 30px;
-  animation: spin 1s linear infinite;
-  margin-right: 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-text {
-  color: #6b7280;
-  font-size: 1rem;
-}
-
-/* Error state */
-.error-container {
-  background-color: #fee2e2;
-  border-radius: 0.375rem;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.error-content {
-  display: flex;
-  align-items: center;
-}
-
-.error-icon {
-  color: #dc2626;
-  font-size: 1.25rem;
-  margin-right: 0.75rem;
-}
-
-.error-text {
-  color: #b91c1c;
-  font-size: 0.875rem;
-}
-
-/* Empty state */
-.empty-container {
-  text-align: center;
-  padding: 3rem 0;
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.empty-icon {
-  font-size: 3rem;
-  color: #d1d5db;
-  margin-bottom: 1rem;
-}
-
-.empty-text {
-  color: #6b7280;
-  font-size: 1.125rem;
-  margin-bottom: 1.5rem;
-}
-
-.empty-add-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #4361ee;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.empty-add-button:hover {
-  background-color: #2541b2;
-}
-
-/* Table styles */
-.table-section {
-  margin-bottom: 2rem;
-}
-
-.table-container {
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  background-color: white;
-}
-
-.grocery-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.grocery-table th {
-  background-color: #f9fafb;
-  text-align: left;
-  padding: 0.75rem 1rem;
-  font-weight: 600;
-  color: #4b5563;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.status-column {
-  width: 80px;
-}
-
-.item-column {
-  min-width: 200px;
-}
-
-.quantity-column, .price-column {
-  width: 100px;
-  text-align: right;
-}
-
-.actions-column {
-  width: 100px;
-  text-align: center;
-}
-
-.table-row {
-  border-bottom: 1px solid #e5e7eb;
-  transition: background-color 0.15s;
-}
-
-.table-row:hover {
-  background-color: #f9fafb;
-}
-
-.table-row:last-child {
-  border-bottom: none;
-}
-
-.status-cell {
-  padding: 0.75rem 1rem;
-  text-align: center;
-}
-
-.status-checkbox {
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
-}
-
-.item-cell {
-  padding: 0.75rem 1rem;
-  font-weight: 500;
-}
-
-.item-cell.purchased {
-  text-decoration: line-through;
-  color: #9ca3af;
-}
-
-.quantity-cell, .price-cell {
-  padding: 0.75rem 1rem;
-  text-align: right;
-}
-
-.actions-cell {
-  padding: 0.75rem 1rem;
-  text-align: center;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.edit-button, .delete-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.15s;
-  cursor: pointer;
-}
-
-.edit-button {
-  color: #4361ee;
-  background-color: #eef2ff;
-  border: none;
-}
-
-.edit-button:hover {
-  background-color: #dbeafe;
-}
-
-.delete-button {
-  color: #ef4444;
-  background-color: #fee2e2;
-  border: none;
-}
-
-.delete-button:hover {
-  background-color: #fecaca;
-}
-
-/* Mobile card styles */
-.mobile-cards {
-  display: none;
-}
-
-.item-card {
-  border-bottom: 1px solid #e5e7eb;
-  padding: 1rem;
-}
-
-.item-card:last-child {
-  border-bottom: none;
-}
-
-.purchased-card {
-  background-color: #f9fafb;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.card-status {
-  margin-right: 0.75rem;
-}
-
-.card-title {
-  font-weight: 600;
-  font-size: 1.125rem;
-  color: #111827;
-}
-
-.card-title.purchased {
-  text-decoration: line-through;
-  color: #9ca3af;
-}
-
-.card-details {
-  margin-bottom: 1rem;
-  padding-left: 2.25rem;
-}
-
-.card-detail {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.detail-label {
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.detail-value {
-  font-weight: 500;
-}
-
-.card-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.card-actions .edit-button,
-.card-actions .delete-button {
-  width: auto;
-  height: auto;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  gap: 0.25rem;
-}
-
-/* Pagination */
-.pagination-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background-color: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-}
-
-.items-info {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.pagination-controls {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.page-button, .page-number {
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  transition: background-color 0.15s;
-}
-
-.page-button {
-  background-color: white;
-  border: 1px solid #d1d5db;
-  color: #4b5563;
-  cursor: pointer;
-}
-
-.page-button:hover:not(:disabled) {
-  background-color: #f3f4f6;
-}
-
-.page-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.page-number {
-  background-color: #4361ee;
-  border: 1px solid #4361ee;
-  color: white;
-  font-weight: 500;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .desktop-table {
-    display: none;
-  }
-  
-  .mobile-cards {
-    display: block;
-  }
-  
-  .pagination-container {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .pagination-controls {
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .controls-section {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .search-filter-container {
-    width: 100%;
-  }
-  
-  .search-container {
-    width: 100%;
-    max-width: none;
-  }
-  
-  .filter-sort-container {
-    width: 100%;
-  }
-  
-  .filter-select {
-    flex: 1;
-  }
-}
-
-/* Summary section */
-.summary-section {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.summary-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 1rem;
-}
-
-.summary-divider {
-  border: 0;
-  height: 1px;
-  background-color: #e5e7eb;
-  margin-bottom: 1.5rem;
-}
-
-.summary-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1.25rem;
-}
-
-.summary-item:last-child {
-  margin-bottom: 0;
-}
-
-.summary-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  margin-right: 1rem;
-  font-size: 1rem;
-}
-
-.summary-item:nth-child(1) .summary-icon {
-  background-color: #eef2ff;
-  color: #4361ee;
-}
-
-.summary-item:nth-child(2) .summary-icon {
-  background-color: #fff7ed;
-  color: #ea580c;
-}
-
-.summary-item:nth-child(3) .summary-icon {
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.summary-content {
-  flex: 1;
-}
-
-.summary-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
-}
-
-.summary-value {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #111827;
-}
-</style>

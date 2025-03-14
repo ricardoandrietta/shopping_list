@@ -3,7 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { AppDataSource } from './config/database';
 import { GroceryItem } from './entity/GroceryItem';
+import { ShoppingList } from './entity/ShoppingList';
 import groceryRoutes, { initializeRepository } from './routes/groceryRoutes';
+import shoppingListRoutes, { initializeRepositories } from './routes/shoppingListRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -27,7 +29,8 @@ app.get('/info', (req, res) => {
   res.json({
     message: 'Grocery List API is running',
     endpoints: {
-      groceries: '/api/groceries'
+      groceries: '/api/groceries',
+      shoppingLists: '/api/shopping-lists'
     }
   });
 });
@@ -41,13 +44,38 @@ const initializeDb = async () => {
   if (isDbInitialized) return;
   
   try {
+    console.log('Initializing database connection...');
     await AppDataSource.initialize();
+    console.log('Database connection initialized successfully');
+    
+    // Always run migrations since synchronize is disabled
+    console.log('Running database migrations...');
+    await AppDataSource.runMigrations();
+    console.log('Migrations completed successfully');
+    
+    console.log('Getting repositories...');
     const groceryRepository = AppDataSource.getRepository(GroceryItem);
+    const shoppingListRepository = AppDataSource.getRepository(ShoppingList);
+    
+    console.log('Initializing repositories...');
     initializeRepository(groceryRepository);
+    initializeRepositories(shoppingListRepository, groceryRepository);
+    
     console.log('Database connection established');
     isDbInitialized = true;
   } catch (error) {
     console.error('Error during Data Source initialization', error);
+    
+    // Try to close the connection if it was opened
+    if (AppDataSource.isInitialized) {
+      try {
+        await AppDataSource.destroy();
+        console.log('Database connection closed after error');
+      } catch (destroyError) {
+        console.error('Failed to initialize database:', destroyError);
+      }
+    }
+    
     throw error;
   }
 };
@@ -61,6 +89,21 @@ app.use('/api/groceries', async (req, res, next) => {
     }
     // Continue to the actual routes
     groceryRoutes(req, res, next);
+  } catch (error) {
+    console.error('Error handling request:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Shopping list routes
+app.use('/api/shopping-lists', async (req, res, next) => {
+  try {
+    // Initialize DB if not already initialized
+    if (!isDbInitialized) {
+      await initializeDb();
+    }
+    // Continue to the actual routes
+    shoppingListRoutes(req, res, next);
   } catch (error) {
     console.error('Error handling request:', error);
     res.status(500).json({ error: 'Internal server error' });
