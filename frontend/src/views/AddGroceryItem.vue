@@ -60,6 +60,23 @@
             </div>
           </div>
           
+          <div class="mb-6">
+            <div class="flex items-center">
+              <input 
+                type="checkbox" 
+                id="createProduct" 
+                v-model="createProduct" 
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              >
+              <label for="createProduct" class="ml-2 block text-sm text-gray-700">
+                Also create a product with this information
+              </label>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">
+              This will add the item to your products catalog for future use
+            </p>
+          </div>
+          
           <div class="flex justify-end space-x-4 mt-8">
             <router-link :to="`/list/${id}`" class="px-6 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-200 transition-colors">
               Cancel
@@ -87,14 +104,16 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, computed } from 'vue'
+import { reactive, onMounted, computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useGroceryStore } from '../stores/groceryStore'
+import { useProductStore } from '../stores/productStore'
 
 const router = useRouter()
 const route = useRoute()
 const id = computed(() => route.params.id)
 const groceryStore = useGroceryStore()
+const productStore = useProductStore()
 
 const form = reactive({
   name: '',
@@ -105,10 +124,23 @@ const form = reactive({
   shopping_list_id: parseInt(route.params.id as string)
 })
 
+const createProduct = ref(false)
 const { loading } = groceryStore
 
 const addItem = async () => {
   await groceryStore.addItem(form)
+  
+  if (createProduct.value) {
+    await productStore.createProduct({
+      name: form.name,
+      brand: null,
+      price: form.price || null,
+      barcode: form.barcode || null,
+      favorite: false,
+      user_id: 1
+    })
+  }
+  
   if (!groceryStore.error) {
     router.push(`/list/${id.value}`)
   }
@@ -116,6 +148,18 @@ const addItem = async () => {
 
 const addItemAndStay = async () => {
   await groceryStore.addItem(form)
+  
+  if (createProduct.value) {
+    await productStore.createProduct({
+      name: form.name,
+      brand: null,
+      price: form.price || null,
+      barcode: form.barcode || null,
+      favorite: false,
+      user_id: 1
+    })
+  }
+  
   if (!groceryStore.error) {
     // Reset form for a new item
     form.name = ''
@@ -123,6 +167,7 @@ const addItemAndStay = async () => {
     form.price = 0
     form.barcode = undefined
     form.purchased = false
+    createProduct.value = false
     // Focus on the name input for convenience
     setTimeout(() => {
       document.getElementById('name')?.focus()

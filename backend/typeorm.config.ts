@@ -1,6 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { GroceryItem } from './src/entity/GroceryItem';
 import { ShoppingList } from './src/entity/ShoppingList';
+import { Product } from './src/entity/Product';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -14,14 +15,14 @@ const options: DataSourceOptions = process.env.NODE_ENV === 'production'
       ssl: {
         rejectUnauthorized: false
       },
-      entities: [GroceryItem, ShoppingList],
+      entities: [GroceryItem, ShoppingList, Product],
       migrations: ['src/migrations/*.ts'],
       migrationsTableName: 'migrations'
     } 
   : {
       type: 'sqlite',
       database: 'grocery.sqlite',
-      entities: [GroceryItem, ShoppingList],
+      entities: [GroceryItem, ShoppingList, Product],
       migrations: ['src/migrations/*.ts'],
       migrationsTableName: 'migrations'
     };

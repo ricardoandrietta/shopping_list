@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+@layer base {
+  button, 
+  .btn,
+  [type="button"],
+  [type="reset"],
+  [type="submit"],
+  [role="button"],
+  a.btn,
+  .cursor-pointer {
+    cursor: pointer !important;
+  }
+  
+  button:disabled,
+  [type="button"]:disabled,
+  [type="reset"]:disabled,
+  [type="submit"]:disabled,
+  .btn:disabled,
+  .disabled {
+    cursor: not-allowed !important;
+  }
+}
+
 @layer components {
   .btn {
     @apply px-4 py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center;
