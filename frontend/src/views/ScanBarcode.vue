@@ -190,7 +190,6 @@ const useBarcode = () => {
   border-radius: 0.375rem;
   color: #4b5563;
   font-weight: 500;
-  cursor: pointer;
   transition: background-color 0.2s;
 }
 
@@ -208,7 +207,6 @@ const useBarcode = () => {
   border-radius: 0.375rem;
   color: white;
   font-weight: 500;
-  cursor: pointer;
   transition: background-color 0.2s;
 }
 
@@ -218,7 +216,6 @@ const useBarcode = () => {
 
 .submit-button:disabled {
   opacity: 0.7;
-  cursor: not-allowed;
 }
 
 @media (max-width: 640px) {
