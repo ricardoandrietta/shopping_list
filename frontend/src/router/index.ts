@@ -4,6 +4,8 @@ import GroceryList from '../views/GroceryList.vue'
 import AddGroceryItem from '../views/AddGroceryItem.vue'
 import EditGroceryItem from '../views/EditGroceryItem.vue'
 import ScanBarcode from '../views/ScanBarcode.vue'
+import Products from '../views/Products.vue'
+import ScanProductBarcode from '../views/ScanProductBarcode.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -39,6 +41,16 @@ const router = createRouter({
       name: 'scan',
       component: ScanBarcode,
       props: true
+    },
+    {
+      path: '/products',
+      name: 'products',
+      component: Products
+    },
+    {
+      path: '/products/scan',
+      name: 'scanProductBarcode',
+      component: ScanProductBarcode
     }
   ]
 })

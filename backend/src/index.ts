@@ -4,8 +4,10 @@ import dotenv from 'dotenv';
 import { AppDataSource } from './config/database';
 import { GroceryItem } from './entity/GroceryItem';
 import { ShoppingList } from './entity/ShoppingList';
+import { Product } from './entity/Product';
 import groceryRoutes, { initializeRepository } from './routes/groceryRoutes';
 import shoppingListRoutes, { initializeRepositories } from './routes/shoppingListRoutes';
+import productRoutes, { initializeRepository as initializeProductRepository } from './routes/productRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -30,7 +32,8 @@ app.get('/info', (req, res) => {
     message: 'Grocery List API is running',
     endpoints: {
       groceries: '/api/groceries',
-      shoppingLists: '/api/shopping-lists'
+      shoppingLists: '/api/shopping-lists',
+      products: '/api/products'
     }
   });
 });
@@ -56,10 +59,12 @@ const initializeDb = async () => {
     console.log('Getting repositories...');
     const groceryRepository = AppDataSource.getRepository(GroceryItem);
     const shoppingListRepository = AppDataSource.getRepository(ShoppingList);
+    const productRepository = AppDataSource.getRepository(Product);
     
     console.log('Initializing repositories...');
     initializeRepository(groceryRepository);
     initializeRepositories(shoppingListRepository, groceryRepository);
+    initializeProductRepository(productRepository);
     
     console.log('Database connection established');
     isDbInitialized = true;
@@ -104,6 +109,21 @@ app.use('/api/shopping-lists', async (req, res, next) => {
     }
     // Continue to the actual routes
     shoppingListRoutes(req, res, next);
+  } catch (error) {
+    console.error('Error handling request:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Product routes
+app.use('/api/products', async (req, res, next) => {
+  try {
+    // Initialize DB if not already initialized
+    if (!isDbInitialized) {
+      await initializeDb();
+    }
+    // Continue to the actual routes
+    productRoutes(req, res, next);
   } catch (error) {
     console.error('Error handling request:', error);
     res.status(500).json({ error: 'Internal server error' });

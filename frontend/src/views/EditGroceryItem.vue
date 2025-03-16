@@ -321,7 +321,6 @@ const updateItem = async () => {
 .toggle-label {
   display: flex;
   align-items: center;
-  cursor: pointer;
 }
 
 .toggle-input {
@@ -364,7 +363,6 @@ const updateItem = async () => {
   border-radius: 0.375rem;
   color: white;
   font-weight: 500;
-  cursor: pointer;
   transition: background-color 0.2s;
 }
 
@@ -374,7 +372,6 @@ const updateItem = async () => {
 
 .submit-button:disabled {
   opacity: 0.7;
-  cursor: not-allowed;
 }
 
 @media (max-width: 640px) {
